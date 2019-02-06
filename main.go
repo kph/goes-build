@@ -322,17 +322,9 @@ func makeArmZipfile(out, name string) (err error) {
 
 	makeDependent("u-boot-" + machine)
 	makeDependent(goesPlatinaMk1Bmc)
-	makeDependent(machine + ".vmlinuz")
 
 	cmdline := "mkimage -C none -A arm -O linux -T ramdisk -d " +
 		machine + ".cpio.xz " + machine + "-ini.bin"
-	if err := shellCommandRun(cmdline); err != nil {
-		return err
-	}
-
-	//	cmdline = "mkimage -C gzip -A arm -O linux -T kernel -d " +
-	//		machine + ".gz " + machine + "-ker.bin"
-	cmdline = "cp " + machine + ".vmlinuz " + machine + "-ker.bin"
 	if err := shellCommandRun(cmdline); err != nil {
 		return err
 	}
@@ -354,7 +346,6 @@ func makeArmZipfile(out, name string) (err error) {
 		"-ubo.bin",
 		"-ver.bin",
 		"-dtb.bin",
-		"-ker.bin",
 	} {
 		file, err := os.Open(machine + suffix)
 		if err != nil {
@@ -598,7 +589,6 @@ func (goenv *goenv) makeCpioArchive(name string) (err error) {
 		return
 	}
 
-	fmt.Printf("Reading goes binary " + pkgdir[name] + "/" + name + "\n")
 	goesbin, err := goenv.stripBinary(pkgdir[name] + "/" + name)
 	if err != nil {
 		return
