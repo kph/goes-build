@@ -366,16 +366,20 @@ func makeArmZipfile(out, name string) (err error) {
 
 	fileMaps := []filemap{
 		{in: "-env.bin"},
-		{in: "-ubo.bin"},
 		{in: "-ver.bin"},
 	}
 
 	if *legacyFlag {
+		fileMaps = append(fileMaps, filemap{in: "-ubo.bin"})
 		fileMaps = append(fileMaps, filemap{in: "-itb.bin",
 			out: "-ker.bin", offset: 0x0, len: 0x200000})
 		fileMaps = append(fileMaps, filemap{in: "-itb.bin",
 			out: "-ini.bin", offset: 0x200000, len: 0x300000})
 	} else {
+		fileMaps = append(fileMaps, filemap{in: "-ubo.bin",
+			offset: 0x0, len: 0x80000})
+		fileMaps = append(fileMaps, filemap{in: "-ubo.bin",
+			out: "-dtb.bin", offset: 0x80000, len: 0x40000})
 		fileMaps = append(fileMaps, filemap{in: "-itb.bin"})
 	}
 
