@@ -516,7 +516,7 @@ func makeAmd64CorebootRom(romfile, machine string) (err error) {
 		" && " + cbfstool + " " + tmprom + " add-payload" +
 		" -f " + machine + ".vmlinuz" +
 		" -I goes-boot.cpio.xz" +
-		` -C "console=ttyS1,57600n8 console=ttyS0,115200n8 intel_iommu=off loglevel=7"` +
+		` -C "console=ttyS1,57600n8 console=ttyS0,115200n8 intel_iommu=off loglevel=8"` +
 		" -n fallback/payload -c none -r COREBOOT" +
 		" && mv " + tmprom + " " + romfile +
 		" && " + cbfstool + " " + romfile + " print"
