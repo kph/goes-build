@@ -45,6 +45,7 @@ const (
 	platinaGoesMainGoesPlatinaMk2       = platinaGoesLegacyMain + "/goes-platina-mk2"
 	platinaGoesMainGoesPlatinaMk2Lc1Bmc = platinaGoesMainGoesPlatinaMk2 + "-lc1-bmc"
 	platinaGoesMainGoesPlatinaMk2Mc1Bmc = platinaGoesMainGoesPlatinaMk2 + "-mc1-bmc"
+	platinaGoesMainGoesRecovery         = platina + "/goes-recovery"
 
 	goesExample             = "goes-example"
 	goesExampleArm          = "goes-example-arm"
@@ -58,6 +59,7 @@ const (
 	goesPlatinaMk1Bmc       = "goes-platina-mk1-bmc"
 	goesPlatinaMk2Lc1Bmc    = "goes-platina-mk2-lc1-bmc"
 	goesPlatinaMk2Mc1Bmc    = "goes-platina-mk2-mc1-bmc"
+	goesRecovery            = "goes-recovery"
 
 	corebootExampleAmd64        = "coreboot-example-amd64"
 	corebootExampleAmd64Config  = "example-amd64_defconfig"
@@ -104,6 +106,7 @@ var (
 		goesExampleArm,
 		goesBoot,
 		goesPlatinaMk1,
+		goesRecovery,
 		vnetPlatinaMk1,
 		platinaMk1Vmlinuz,
 		corebootPlatinaMk1,
@@ -179,6 +182,7 @@ diag	include manufacturing diagnostics with BMC
 		goesPlatinaMk1Test:      platinaGoesMainGoesPlatinaMk1,
 		goesPlatinaMk1Installer: platinaGoesMainGoesPlatinaMk1,
 		goesPlatinaMk1Bmc:       platinaGoesMainGoesPlatinaMk1Bmc,
+		goesRecovery:            platinaGoesMainGoesRecovery,
 		platinaMk1BmcVmlinuz:    "platina-mk1-bmc_defconfig",
 		ubootPlatinaMk1Bmc:      "platinamx6boards_qspi_defconfig",
 		goesPlatinaMk2Lc1Bmc:    platinaGoesMainGoesPlatinaMk2Lc1Bmc,
@@ -193,6 +197,7 @@ diag	include manufacturing diagnostics with BMC
 		goesBootArm:       "../goes-boot",
 		goesPlatinaMk1:    "../goes-platina-mk1",
 		goesPlatinaMk1Bmc: "../goes-bmc",
+		goesRecovery:      "../goes-recovery",
 		goesExample:       "../goes-example",
 		goesExampleArm:    "../goes-example",
 		vnetPlatinaMk1:    "../vnet-platina-mk1",
@@ -208,11 +213,12 @@ func init() {
 		corebootExampleAmd64:    makeAmd64Boot,
 		corebootExampleAmd64Rom: makeAmd64CorebootRom,
 		goesExampleArm:          makeArmLinuxStatic,
-		goesBoot:                makeAmd64LinuxInitramfs,
-		goesBootArm:             makeArmLinuxInitramfs,
+		goesBoot:                makeAmd64LinuxStatic,
+		goesBootArm:             makeArmLinuxStatic,
 		goesIP:                  makeHost,
 		goesIPTest:              makeHostTest,
 		goesPlatinaMk1:          makeGoesPlatinaMk1,
+		goesRecovery:            makeAmd64LinuxInitramfs,
 		vnetPlatinaMk1:          makeAmd64LinuxStatic,
 		platinaMk1Vmlinuz:       makeAmd64LinuxKernel,
 		corebootPlatinaMk1:      makeAmd64Boot,
@@ -505,7 +511,7 @@ func makeAmd64LinuxTest(out, name string) error {
 func makeAmd64CorebootRom(romfile, machine string) (err error) {
 	makeDependent("coreboot-" + machine)
 	makeDependent(machine + ".vmlinuz")
-	makeDependent(goesBoot)
+	makeDependent(goesRecovery)
 
 	dir := "worktrees/coreboot/" + machine
 	build := dir + "/build"
@@ -515,8 +521,8 @@ func makeAmd64CorebootRom(romfile, machine string) (err error) {
 	cmdline := "cp " + build + "/coreboot.rom " + tmprom +
 		" && " + cbfstool + " " + tmprom + " add-payload" +
 		" -f " + machine + ".vmlinuz" +
-		" -I goes-boot.cpio.xz" +
-		` -C "console=ttyS1,57600n8 console=ttyS0,115200n8 intel_iommu=off loglevel=8"` +
+		" -I goes-recovery.cpio.xz" +
+		` -C "console=ttyS0,115200n8 intel_iommu=off loglevel=8"` +
 		" -n fallback/payload -c none -r COREBOOT" +
 		" && mv " + tmprom + " " + romfile +
 		" && " + cbfstool + " " + romfile + " print"
@@ -649,6 +655,7 @@ func (goenv *goenv) makeCpioArchive(name string) (err error) {
 	}{
 		{".", 0775},
 		{"boot", 0775},
+		{"dev", 0775},
 		{"etc", 0775},
 		{"etc/goes", 0775},
 		{"etc/goes/sshd", 0700},
