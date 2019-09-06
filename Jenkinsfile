@@ -43,12 +43,18 @@ pipeline {
 		dir('goes-build') {
 		    git([
 			url: 'https://github.com/platinasystems/goes-build.git',
-			branch: 'master'
+			branch: 'goes-recovery'
 		    ])
 		}
 		dir('goes-platina-mk1') {
 		    git([
 			url: 'https://github.com/platinasystems/goes-platina-mk1.git',
+			branch: 'master'
+		    ])
+		}
+		dir('goes-recovery') {
+		    git([
+			url: 'https://github.com/platinasystems/goes-recovery.git',
 			branch: 'master'
 		    ])
 		}
