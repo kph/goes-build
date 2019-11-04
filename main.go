@@ -159,6 +159,7 @@ diag	include manufacturing diagnostics with BMC
 	ubootPlatinaMk1Bmc              *target
 	vnetPlatinaMk1                  *target
 	zipPlatinaMk1Bmc                *target
+	debTest                         *target
 
 	allTargets = []*target{}
 	targetMap  = map[string]*target{}
@@ -370,6 +371,11 @@ func init() {
 		def:   true,
 	}
 
+	debTest = &target{
+		name:  "deb",
+		maker: makeAmd64Debfile,
+	}
+
 	// Set up dependencies. We have to do this after we have set up all
 	// of the targets, since we need the pointer to the target already
 	// set up.
@@ -449,6 +455,7 @@ func init() {
 		ubootPlatinaMk1Bmc,
 		vnetPlatinaMk1,
 		zipPlatinaMk1Bmc,
+		debTest,
 	}
 	for _, t := range allTargets {
 		if _, p := targetMap[t.name]; p {
@@ -1356,4 +1363,15 @@ func (goenv *goenv) makeLinuxDeb(tg *target) (err error) {
 		return err
 	}
 	return
+}
+
+func makeAmd64Debfile(tg *target) (err error) {
+	files := []nb{
+		{
+			Name: "./boot/test.test",
+			Body: []byte("Hello world!\n"),
+		},
+	}
+	err = NewDebianArchive("deb.deb", files)
+	return err
 }
