@@ -91,6 +91,7 @@ func NewDebianArchive(name string, data []nb) (err error) {
 	aw.WriteGlobalHeader()
 	sliceToDeb(aw, "debian-binary", []byte("2.0\n"))
 
+	control := []nb{}
 	controlFile := fmt.Sprintf(`Package: %s
 Version: %s
 Maintainer: %s
@@ -104,36 +105,10 @@ Architecture: amd64
 		"Platina Systems <platinasystems@platinasystems.com>",
 	)
 
-	var ctlbuf bytes.Buffer
-	twz := gzip.NewWriter(&ctlbuf)
-	tw := tar.NewWriter(twz)
-	hdr := &tar.Header{
-		Name: "control",
-		Mode: 0600,
-		Size: int64(len(controlFile)),
-	}
-	if err := tw.WriteHeader(hdr); err != nil {
-		return fmt.Errorf("Error writing header for control in control.tar.gz: %w",
-			err)
-	}
-	cnt, err := tw.Write([]byte(controlFile))
-	if err != nil {
-		return fmt.Errorf("Error writing data for control in control.tar: %w",
-			err)
-	}
-	if cnt != len(controlFile) {
-		return fmt.Errorf("Error writing data for control in control.tar: wrote %d expecting %d",
-			cnt, len(controlFile))
-	}
-	if err := tw.Close(); err != nil {
-		return fmt.Errorf("Error closing control.tar: %w", err)
-	}
-	if err := twz.Close(); err != nil {
-		return fmt.Errorf("Error closing control.tar.gz: %w", err)
-	}
-	if err := sliceToDeb(aw, "control.tar.gz", ctlbuf.Bytes()); err != nil {
-		return err
-	}
+	control = append(control,
+		nb{Name: "control", Body: []byte(controlFile)})
+
+	newTarMember(aw, "control.tar.gz", control)
 
 	newTarMember(aw, "data.tar.gz", data)
 
