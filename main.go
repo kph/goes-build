@@ -1368,7 +1368,10 @@ func (goenv *goenv) makeLinuxDeb(tg *target) (err error) {
 func makeAmd64Debfile(tg *target) (err error) {
 	files := []nb{
 		{
-			Name: "./boot/test.test",
+			Name: "boot/",
+		},
+		{
+			Name: "boot/test.test",
 			Body: []byte("Hello world!\n"),
 		},
 	}

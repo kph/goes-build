@@ -11,6 +11,7 @@ import (
 	"compress/gzip"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/platinasystems/ar"
@@ -51,9 +52,15 @@ func newTarMember(aw *ar.Writer, name string, data []nb) (err error) {
 
 	for _, entry := range data {
 		hdr := &tar.Header{
-			Name: entry.Name,
-			Mode: 0600,
-			Size: int64(len(entry.Body)),
+			Name:       entry.Name,
+			Mode:       0644,
+			Size:       int64(len(entry.Body)),
+			ModTime:    time.Now(),
+			AccessTime: time.Now(),
+			ChangeTime: time.Now(),
+		}
+		if strings.HasSuffix(entry.Name, "/") {
+			hdr.Mode = 0755
 		}
 		if err := tw.WriteHeader(hdr); err != nil {
 			return fmt.Errorf("Error writing header for %s in %s: %w",
