@@ -9,6 +9,7 @@ import (
 	"archive/tar"
 	"bytes"
 	"compress/gzip"
+	"crypto/md5"
 	"fmt"
 	"os"
 	"strings"
@@ -115,6 +116,15 @@ Architecture: amd64
 	control = append(control,
 		nb{Name: "control", Body: []byte(controlFile)})
 
+	md5sums := ""
+	for _, entry := range data {
+		if entry.Body != nil {
+			md5sums = fmt.Sprintf("%s%x %s\n", md5sums,
+				md5.Sum(entry.Body), entry.Name)
+		}
+	}
+
+	control = append(control, nb{Name: "md5sums", Body: []byte(md5sums)})
 	newTarMember(aw, "control.tar.gz", control)
 
 	newTarMember(aw, "data.tar.gz", data)
