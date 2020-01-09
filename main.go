@@ -1324,7 +1324,7 @@ func (goenv *goenv) makeLinux(tg *target) (err error) {
 	ver = strings.TrimLeft(ver, "v")
 	f := strings.Split(ver, "-")
 	id := f[0] + "-" + machine
-	if err := shellCommandRun("make -C " + dir +
+	if err := shellCommandRun("make V=1 -C " + dir +
 		" -j " + strconv.Itoa(runtime.NumCPU()*2) +
 		" ARCH=" + goenv.kernelArch +
 		" CROSS_COMPILE=" + goenv.gnuPrefix +
