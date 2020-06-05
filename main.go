@@ -16,13 +16,13 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
-	"strconv"
 	"strings"
 	"sync"
 	"syscall"
 	"time"
 
 	"github.com/platinasystems/go-cpio"
+	"github.com/platinasystems/jobserver"
 )
 
 const (
@@ -167,6 +167,8 @@ diag	include manufacturing diagnostics with BMC
 	targetMap  = map[string]*target{}
 
 	worktreeMutex = &sync.Mutex{}
+
+	js *jobserver.Client
 )
 
 func init() {
@@ -459,6 +461,8 @@ func makeTargets(parent string, targets []*target) {
 		wg.Add(1)
 		go func(tg *target, wg *sync.WaitGroup) {
 			tg.mutex.Lock()
+			js.GetToken()
+			defer js.PutToken()
 			if !tg.built {
 				if parent == "" {
 					fmt.Printf("# Making Package %s\n", tg.name)
@@ -517,6 +521,14 @@ func main() {
 			}
 		}
 	}
+	c, err := jobserver.NewClient(10) // fixme 10 for testing
+	if err != nil {
+		fmt.Printf("Error initializing jobserver: %s", err)
+		os.Exit(1)
+	}
+	js = c
+	defer js.FlushTokens()
+	fmt.Printf("Jobserver initialized, ExpectedJobs = %d\n", js.ExpectedJobs())
 	makeTargets("", tgs)
 }
 
@@ -543,7 +555,7 @@ func makeArmLinuxStatic(tg *target) error {
 
 func makeArmBoot(tg *target) (err error) {
 	machine := strings.TrimPrefix(tg.name, "u-boot-")
-	if err = armLinux.makeboot(tg.name, "make "+tg.config); err != nil {
+	if err = armLinux.makeboot(tg.name, "env;make "+tg.config); err != nil {
 		return err
 	}
 	env, err := makeUbootEnv()
@@ -734,7 +746,7 @@ func makeArmLinuxInitramfs(tg *target) (err error) {
 }
 
 func makeAmd64Boot(tg *target) (err error) {
-	return amd64Linux.makeboot(tg.name, "MAKEINFO=missing make crossgcc-i386 && make "+tg.config)
+	return amd64Linux.makeboot(tg.name, "env;MAKEINFO=missing make crossgcc-i386 && make "+tg.config)
 }
 
 func makeAmd64Linux(tg *target) error {
@@ -1246,6 +1258,11 @@ func shellCommandRun(cmdline string) (err error) {
 		cmd.Stdout = os.Stdout
 	}
 	cmd.Stderr = os.Stderr
+	srv, err := js.SetupServer(cmd, 10)
+	if err != nil {
+		panic(err)
+	}
+	defer srv.DisableJobs()
 	err = cmd.Run()
 	return
 }
@@ -1326,7 +1343,7 @@ func (goenv *goenv) makeboot(out string, configCommand string) (err error) {
 	if err != nil {
 		return
 	}
-	cmdline := "make -C " + dir +
+	cmdline := "env;make -C " + dir +
 		" ARCH=" + goenv.kernelArch +
 		" CROSS_COMPILE=" + goenv.gnuPrefix
 	if !*zFlag { // quiet "Skipping submodule and Created CBFS" messages
@@ -1364,15 +1381,26 @@ func (goenv *goenv) makeLinux(tg *target) (err error) {
 	machine := strings.TrimSuffix(tg.name, ".vmlinuz")
 	configCommand := "cp " + goenv.kernelConfigPath + "/" + tg.config +
 		" .config" +
-		" && make oldconfig ARCH=" + goenv.kernelArch
+		" && env;make oldconfig ARCH=" + goenv.kernelArch
 
 	dir, err := configWorktree("linux", machine, configCommand)
 	if err != nil {
 		return
 	}
+<<<<<<< HEAD
 	id, pkgver, err := getPackageVersions(dir)
 	if err := shellCommandRun("make -C " + dir +
 		" -j " + strconv.Itoa(runtime.NumCPU()*2) +
+=======
+	ver, err := shellCommandOutput("cd " + dir + " && git describe")
+	if err != nil {
+		return err
+	}
+	ver = strings.TrimLeft(ver, "v")
+	f := strings.Split(ver, "-")
+	id := f[0] + "-" + machine
+	if err := shellCommandRun("env;make -C " + dir +
+>>>>>>> dcb245e... checkpoint jobserver
 		" ARCH=" + goenv.kernelArch +
 		" CROSS_COMPILE=" + goenv.gnuPrefix +
 		" KDEB_PKGVERSION=" + pkgver +
@@ -1393,6 +1421,7 @@ func (goenv *goenv) makeLinuxDeb(tg *target) (err error) {
 	if err != nil {
 		return
 	}
+<<<<<<< HEAD
 	id, pkgver, err := getPackageVersions(dir)
 	pkgarch := pkgver + "_" + goenv.goarch
 	pkgdeb := pkgarch + ".deb"
@@ -1400,6 +1429,16 @@ func (goenv *goenv) makeLinuxDeb(tg *target) (err error) {
 	iddeb := idmach + "_" + pkgdeb
 	cmd := "make -C " + dir +
 		" -j " + strconv.Itoa(runtime.NumCPU()*2) +
+=======
+	ver, err := shellCommandOutput("cd " + dir + " && git describe")
+	if err != nil {
+		return err
+	}
+	ver = strings.TrimLeft(ver, "v")
+	f := strings.Split(ver, "-")
+	id := f[0] + "-" + machine
+	if err := shellCommandRun("env;make -C " + dir +
+>>>>>>> dcb245e... checkpoint jobserver
 		" ARCH=" + goenv.kernelArch +
 		" CROSS_COMPILE=" + goenv.gnuPrefix +
 		" KDEB_PKGVERSION=" + pkgver +
