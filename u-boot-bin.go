@@ -45,7 +45,16 @@ func makeUboot(ubo string) []byte {
 		panic(fmt.Errorf("qspi-header unexpected length %d",
 			qspiHeader.Len()))
 	}
+
+	err = ioutil.WriteFile("test.dat", qspiHeader.Bytes(), 0644)
+	if err != nil {
+		panic("ioutil.Writefile")
+	}
 	copy(ubootbin[headerStart:], qspiHeader.Bytes())
 
+	err = ioutil.WriteFile("u-boot.dat", ubootbin, 0644)
+	if err != nil {
+		panic("ioutil.Writefile 2")
+	}
 	return ubootbin
 }
