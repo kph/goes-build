@@ -1387,20 +1387,8 @@ func (goenv *goenv) makeLinux(tg *target) (err error) {
 	if err != nil {
 		return
 	}
-<<<<<<< HEAD
 	id, pkgver, err := getPackageVersions(dir)
 	if err := shellCommandRun("make -C " + dir +
-		" -j " + strconv.Itoa(runtime.NumCPU()*2) +
-=======
-	ver, err := shellCommandOutput("cd " + dir + " && git describe")
-	if err != nil {
-		return err
-	}
-	ver = strings.TrimLeft(ver, "v")
-	f := strings.Split(ver, "-")
-	id := f[0] + "-" + machine
-	if err := shellCommandRun("env;make -C " + dir +
->>>>>>> dcb245e... checkpoint jobserver
 		" ARCH=" + goenv.kernelArch +
 		" CROSS_COMPILE=" + goenv.gnuPrefix +
 		" KDEB_PKGVERSION=" + pkgver +
@@ -1421,24 +1409,12 @@ func (goenv *goenv) makeLinuxDeb(tg *target) (err error) {
 	if err != nil {
 		return
 	}
-<<<<<<< HEAD
 	id, pkgver, err := getPackageVersions(dir)
 	pkgarch := pkgver + "_" + goenv.goarch
 	pkgdeb := pkgarch + ".deb"
 	idmach := id + "-" + machine
 	iddeb := idmach + "_" + pkgdeb
 	cmd := "make -C " + dir +
-		" -j " + strconv.Itoa(runtime.NumCPU()*2) +
-=======
-	ver, err := shellCommandOutput("cd " + dir + " && git describe")
-	if err != nil {
-		return err
-	}
-	ver = strings.TrimLeft(ver, "v")
-	f := strings.Split(ver, "-")
-	id := f[0] + "-" + machine
-	if err := shellCommandRun("env;make -C " + dir +
->>>>>>> dcb245e... checkpoint jobserver
 		" ARCH=" + goenv.kernelArch +
 		" CROSS_COMPILE=" + goenv.gnuPrefix +
 		" KDEB_PKGVERSION=" + pkgver +
