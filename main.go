@@ -1258,13 +1258,24 @@ func shellCommandRun(cmdline string) (err error) {
 		cmd.Stdout = os.Stdout
 	}
 	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}
+
+func shellCommandRunJS(cmdline string) (Err error) {
+	cmd := shellCommand(cmdline)
+	if cmd == nil {
+		return
+	}
+	if *zFlag {
+		cmd.Stdout = os.Stdout
+	}
+	cmd.Stderr = os.Stderr
 	srv, err := js.SetupServer(cmd, 10)
 	if err != nil {
 		panic(err)
 	}
-	defer srv.DisableJobs()
-	err = cmd.Run()
-	return
+	defer srv.DisableJobs(cmdline)
+	return cmd.Run()
 }
 
 func findWorktree(repo string, machine string) (workdir string, gitdir string, err error) {
@@ -1329,7 +1340,7 @@ func configWorktree(repo string, machine string, config string) (workdir string,
 	}
 	_, err = os.Stat(filepath.Join(workdir, ".config"))
 	if reconfig || os.IsNotExist(err) {
-		if err := shellCommandRun("cd " + workdir +
+		if err := shellCommandRunJS("cd " + workdir +
 			" && " + config); err != nil {
 			return "", err
 		}
@@ -1349,7 +1360,7 @@ func (goenv *goenv) makeboot(out string, configCommand string) (err error) {
 	if !*zFlag { // quiet "Skipping submodule and Created CBFS" messages
 		cmdline += " 2>/dev/null"
 	}
-	if err := shellCommandRun(cmdline); err != nil {
+	if err := shellCommandRunJS(cmdline); err != nil {
 		return err
 	}
 	return
@@ -1388,7 +1399,7 @@ func (goenv *goenv) makeLinux(tg *target) (err error) {
 		return
 	}
 	id, pkgver, err := getPackageVersions(dir)
-	if err := shellCommandRun("make -C " + dir +
+	if err := shellCommandRunJS("make -C " + dir +
 		" ARCH=" + goenv.kernelArch +
 		" CROSS_COMPILE=" + goenv.gnuPrefix +
 		" KDEB_PKGVERSION=" + pkgver +
@@ -1427,7 +1438,7 @@ func (goenv *goenv) makeLinuxDeb(tg *target) (err error) {
 		" " +
 		filepath.Join(dir, "..", "linux-libc-dev_"+pkgdeb) +
 		" ."
-	if err := shellCommandRun(cmd); err != nil {
+	if err := shellCommandRunJS(cmd); err != nil {
 		return err
 	}
 	return

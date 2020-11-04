@@ -5,6 +5,9 @@ COREBOOTBIN=worktrees/coreboot/
 goes-build:
 	go build
 	#./goes-build -x -z -v coreboot-example-amd64 coreboot-platina-mk1
+ 
+test:
+	+./goes-build -x -z -v
 
 install:
 	$(INSTALL) -d $(DESTDIR)/usr/bin
