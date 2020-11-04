@@ -1414,7 +1414,6 @@ func (goenv *goenv) makeLinuxDeb(tg *target) (err error) {
 	pkgdeb := pkgarch + ".deb"
 	idmach := id + "-" + machine
 	iddeb := idmach + "_" + pkgdeb
-	iddbgdeb := idmach + "-dbg_" + pkgdeb
 	cmd := "make -C " + dir +
 		" -j " + strconv.Itoa(runtime.NumCPU()*2) +
 		" ARCH=" + goenv.kernelArch +
@@ -1426,8 +1425,6 @@ func (goenv *goenv) makeLinuxDeb(tg *target) (err error) {
 		filepath.Join(dir, "..", "linux-headers-"+iddeb) +
 		" " +
 		filepath.Join(dir, "..", "linux-image-"+iddeb) +
-		" " +
-		filepath.Join(dir, "..", "linux-image-"+iddbgdeb) +
 		" " +
 		filepath.Join(dir, "..", "linux-libc-dev_"+pkgdeb) +
 		" ."
@@ -1470,11 +1467,7 @@ func (goenv *goenv) makeDebianControl(tg *target) (err error) {
 					currentPackage)
 			}
 			ps := strings.Split(p, "-")
-			if ps[len(ps)-1] != "dbg" {
-				machine = ps[len(ps)-2] + "-" + ps[len(ps)-1]
-			} else {
-				machine = ps[len(ps)-3] + "-" + ps[len(ps)-2]
-			}
+			machine = ps[len(ps)-2] + "-" + ps[len(ps)-1]
 			dir, _, err := findWorktree("linux", machine)
 			if err != nil {
 				panic(err)
