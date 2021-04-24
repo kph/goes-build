@@ -150,7 +150,6 @@ diag	include manufacturing diagnostics with BMC
 	goesIPTest                 *target
 	goesPlatinaMk1             *target
 	goesPlatinaMk1Bmc          *target
-	goesPlatinaMk1Installer    *target
 	goesPlatinaMk1Test         *target
 	goesPlatinaMk2Lc1Bmc       *target
 	goesPlatinaMk2Mc1Bmc       *target
@@ -300,12 +299,6 @@ func init() {
 		dirName: platinaGoesMainGoesPlatinaMk1BmcDir,
 	}
 
-	goesPlatinaMk1Installer = &target{
-		name:    "goes-platina-mk1-installer",
-		maker:   makeGoesPlatinaMk1Installer,
-		dirName: platinaGoesMainGoesPlatinaMk1Dir,
-	}
-
 	goesPlatinaMk1Test = &target{
 		name:    "goes-platina-mk1.test",
 		maker:   makeAmd64LinuxTest,
@@ -445,7 +438,6 @@ func init() {
 		goesIPTest,
 		goesPlatinaMk1,
 		goesPlatinaMk1Bmc,
-		goesPlatinaMk1Installer,
 		goesPlatinaMk1Test,
 		goesPlatinaMk2Lc1Bmc,
 		goesPlatinaMk2Mc1Bmc,
@@ -819,43 +811,6 @@ func makeGoesPlatinaMk1(tg *target) error {
 		args = append(args, "-gcflags", "-N -l")
 	}
 	return amd64Linux.goDoForPkg(goesPlatinaMk1, "build", "", "", args...)
-}
-
-func makeGoesPlatinaMk1Installer(tg *target) error {
-	var zfiles []string
-	tinstaller := tg.name + ".tmp"
-	tzip := goesPlatinaMk1.name + ".zip"
-	err := makeGoesPlatinaMk1(tg)
-	if err != nil {
-		return err
-	}
-	err = amd64Linux.goDoInDir(tg, "build", "-o", tinstaller,
-		platinaGoesMainGoesInstaller)
-	if err != nil {
-		return err
-	}
-	const fe1so = "fe1.so"
-	fi, fierr := os.Stat(fe1so)
-	if fierr != nil {
-		return fmt.Errorf("can't find " + fe1so)
-	}
-	zfiles = append(zfiles, fi.Name())
-
-	err = zipfile(tzip, append(zfiles, goesPlatinaMk1.name))
-	if err != nil {
-		return err
-	}
-	err = catto(tg.name, tinstaller, tzip)
-	if err != nil {
-		return err
-	}
-	if err = rm(tinstaller, tzip); err != nil {
-		return err
-	}
-	if err = zipa(tg.name); err != nil {
-		return err
-	}
-	return chmodx(tg.name)
 }
 
 func (goenv *goenv) makeCpioArchive(tg *target) (err error) {
