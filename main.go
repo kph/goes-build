@@ -829,7 +829,7 @@ func makeGoesPlatinaMk1Installer(tg *target) error {
 	if err != nil {
 		return err
 	}
-	err = amd64Linux.goDoInDir(tg.dirName, "build", "-o", tinstaller,
+	err = amd64Linux.goDoInDir(tg, "build", "-o", tinstaller,
 		platinaGoesMainGoesInstaller)
 	if err != nil {
 		return err
@@ -1008,7 +1008,11 @@ func mkfileFromHostCpio(w *cpio.Writer, tname string, mode os.FileMode, hname st
 	return mkfileFromSliceCpio(w, tname, mode, hname, data)
 }
 
-func (goenv *goenv) goDoInDir(dir string, args ...string) error {
+func (goenv *goenv) goDoInDir(tg *target, args ...string) error {
+	dir := tg.dirName
+	if dir == "" {
+		dir = platinaGoesDir // legacy packages
+	}
 	if len(*tagsFlag) > 0 {
 		done := false
 		for i, arg := range args {
@@ -1081,7 +1085,7 @@ func (goenv *goenv) goDoForPkg(tg *target, op string, tags string,
 	args = append(args, pkgArgs...)
 	args = append(args, "-ldflags", ldflags)
 	args = append(args, dirPath)
-	return goenv.goDoInDir(dir, args...)
+	return goenv.goDoInDir(tg, args...)
 }
 
 func (goenv *goenv) log(args ...string) {
